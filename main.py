@@ -113,13 +113,16 @@ def get_query_of_entity(g, entity):
 def get_mentions(g, entity, question=None, lang="en"):
     knows_query = f"""
         {PREFIXES}
-        SELECT DISTINCT ?mention ?entityuri ?propertyuri ?invpropertyuri
+        SELECT DISTINCT ?mention ?entityuri ?propertyuri ?invpropertyuri ?maxpropertyuri ?minpropertyuri ?valpropertyuri
         WHERE {{
             <{entity}> p:P38 ?stmt .
             ?stmt ps:P38 ?mention .
             OPTIONAL {{ ?stmt pq:P17 ?entityuri }} .
             OPTIONAL {{ ?stmt pq:P18 ?propertyuri }} .
             OPTIONAL {{ ?stmt pq:P45 ?invpropertyuri }} .            
+            OPTIONAL {{ ?stmt pq:P48 ?maxpropertyuri }} .            
+            OPTIONAL {{ ?stmt pq:P49 ?minpropertyuri }} .            
+            OPTIONAL {{ ?stmt pq:P50 ?valpropertyuri }} .            
             FILTER(LANG(?mention) = "{lang}") 
         }}"""
 
@@ -136,6 +139,15 @@ def get_mentions(g, entity, question=None, lang="en"):
             if row.invpropertyuri is not None:
                 curr_res["property"] = "http://www.wikidata.org/prop/" + row.invpropertyuri.value
                 curr_res["inverse"] = True
+            if row.maxpropertyuri is not None:
+                curr_res["property"] = "http://www.wikidata.org/prop/" + row.maxpropertyuri.value
+                curr_res["order"] = "max"
+            if row.minpropertyuri is not None:
+                curr_res["property"] = "http://www.wikidata.org/prop/" + row.minpropertyuri.value
+                curr_res["order"] = "min"
+            if row.valpropertyuri is not None:
+                curr_res["property"] = "http://www.wikidata.org/prop/" + row.valpropertyuri.value
+                curr_res["value"] = True
 
             if len(curr_res) > 2: # neither propert nor entity would be useless
                 res.append(curr_res)
@@ -149,8 +161,10 @@ def get_results(query, endpoint):
     res = sparql.query().convert()
     keys = list(res.keys())
     for k in keys:
-        if k not in ["head", "results"]:
+        if k in ["meta"]:
             res.pop(k)
+    if "results" in res and len(res["results"]["bindings"]) == 0:
+        print(f"Error: Empty result for query {query}")
     return res
 
 if __name__ == "__main__":
