@@ -113,7 +113,7 @@ def get_query_of_entity(g, entity):
 def get_mentions(g, entity, question=None, lang="en"):
     knows_query = f"""
         {PREFIXES}
-        SELECT DISTINCT ?mention ?entityuri ?propertyuri ?invpropertyuri ?maxpropertyuri ?minpropertyuri ?valpropertyuri
+        SELECT DISTINCT ?mention ?entityuri ?propertyuri ?invpropertyuri ?maxpropertyuri ?minpropertyuri ?valpropertyuri ?existspropertyuri ?notexistspropertyuri ?notexistsinvpropertyuri ?existsinvpropertyuri ?subpropertyuri ?superpropertyuri ?objproppropertyuri ?objvalpropertyuri
         WHERE {{
             <{entity}> p:P38 ?stmt .
             ?stmt ps:P38 ?mention .
@@ -122,7 +122,14 @@ def get_mentions(g, entity, question=None, lang="en"):
             OPTIONAL {{ ?stmt pq:P45 ?invpropertyuri }} .            
             OPTIONAL {{ ?stmt pq:P48 ?maxpropertyuri }} .            
             OPTIONAL {{ ?stmt pq:P49 ?minpropertyuri }} .            
-            OPTIONAL {{ ?stmt pq:P50 ?valpropertyuri }} .            
+            OPTIONAL {{ ?stmt pq:P50 ?valpropertyuri }} . 
+            OPTIONAL {{ ?stmt pq:P51 ?existspropertyuri }} . 
+            OPTIONAL {{ ?stmt pq:P52 ?notexistspropertyuri }} . 
+            OPTIONAL {{ ?stmt pq:P56 ?notexistsinvpropertyuri }} .
+            OPTIONAL {{ ?stmt pq:P55 ?existsinvpropertyuri }} .
+            OPTIONAL {{ ?stmt pq:P58 ?subpropertyuri }} .
+            OPTIONAL {{ ?stmt pq:P59 ?superpropertyuri }} .
+            OPTIONAL {{ ?stmt pq:P62 ?objproppropertyuri . ?stmt pq:P63 ?objvalpropertyuri }} .
             FILTER(LANG(?mention) = "{lang}") 
         }}"""
 
@@ -130,24 +137,48 @@ def get_mentions(g, entity, question=None, lang="en"):
     res = []
     for row in qres:
         if question is None or row.mention.value.lower() in question.lower():
-            curr_res = {"string": row.mention.value, "language": row.mention.language}
-            if row.entityuri is not None:
+            curr_res = {"string": row.mention.value, "language": row.mention.language}# mention: ps:p38
+            if row.entityuri is not None:#pq:P17
                 curr_res["entity"] = "http://www.wikidata.org/entity/" + row.entityuri.value
-            if row.propertyuri is not None:
+            if row.propertyuri is not None:#pq:P18
                 curr_res["property"] = "http://www.wikidata.org/prop/" + row.propertyuri.value
-                curr_res["inverse"] = False
-            if row.invpropertyuri is not None:
+            if row.invpropertyuri is not None:#pq:P45
                 curr_res["property"] = "http://www.wikidata.org/prop/" + row.invpropertyuri.value
                 curr_res["inverse"] = True
-            if row.maxpropertyuri is not None:
+            if row.maxpropertyuri is not None:#pq:P48
                 curr_res["property"] = "http://www.wikidata.org/prop/" + row.maxpropertyuri.value
-                curr_res["order"] = "max"
-            if row.minpropertyuri is not None:
+                curr_res["superlative"] = "max"
+            if row.minpropertyuri is not None:#pq:P49
                 curr_res["property"] = "http://www.wikidata.org/prop/" + row.minpropertyuri.value
-                curr_res["order"] = "min"
-            if row.valpropertyuri is not None:
+                curr_res["superlative"] = "min"
+            if row.valpropertyuri is not None:#pq:P50
                 curr_res["property"] = "http://www.wikidata.org/prop/" + row.valpropertyuri.value
-                curr_res["value"] = True
+                curr_res["mention"] = "implicit"
+            if row.existspropertyuri is not None:#pq:P51
+                curr_res["property"] = "http://www.wikidata.org/prop/" + row.existspropertyuri.value
+                curr_res["quantifier"] = "exists"
+            if row.notexistspropertyuri is not None:#pq:P52
+                curr_res["property"] = "http://www.wikidata.org/prop/" + row.notexistspropertyuri.value
+                curr_res["quantifier"] = "not exists"
+            if row.notexistsinvpropertyuri is not None:#pq:P56
+                curr_res["property"] = "http://www.wikidata.org/prop/" + row.notexistsinvpropertyuri.value
+                curr_res["quantifier"] = "not exists"
+                curr_res["inverse"] = True
+            if row.existsinvpropertyuri is not None:#pq:P55
+                curr_res["property"] = "http://www.wikidata.org/prop/" + row.existsinvpropertyuri.value
+                curr_res["quantifier"] = "exists"
+                curr_res["inverse"] = True
+            if row.subpropertyuri is not None:#pq:P58
+                curr_res["property"] = "http://www.wikidata.org/prop/" + row.subpropertyuri.value
+                curr_res["mention"] = "subproperty"
+            if row.superpropertyuri is not None:#pq:P59
+                curr_res["property"] = "http://www.wikidata.org/prop/" + row.superpropertyuri.value
+                curr_res["mention"] = "superproperty"
+            if row.objproppropertyuri is not None and row.objvalpropertyuri is not None:#pq:P62 pq:P63
+                curr_res["property"] = "http://www.wikidata.org/prop/" + row.objproppropertyuri.value
+                curr_res["mention"] = "implicit"
+                curr_res["quantifier"] = "hasvalue"
+                curr_res["value"] = row.objvalpropertyuri.value
 
             if len(curr_res) > 2: # neither propert nor entity would be useless
                 res.append(curr_res)
