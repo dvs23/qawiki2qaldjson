@@ -1,6 +1,6 @@
 import json
 from argparse import ArgumentParser
-
+import argparse
 import rdflib
 from SPARQLWrapper import SPARQLWrapper, JSON
 
@@ -201,8 +201,9 @@ def get_results(query, endpoint):
 if __name__ == "__main__":
     argparser = ArgumentParser()
     argparser.add_argument("--endpoint", type=str, default="http://localhost:8890/sparql")
-    argparser.add_argument("--ttlfile", type=str, default="./qawiki-v1-complete-2025-09-09.ttl")
+    argparser.add_argument("--ttlfile", type=str, default="./dump-2026-03-12.ttl")
     argparser.add_argument("--outpath", type=str, default="./wikikgqa.json")
+    argparser.add_argument('--skipempty', action=argparse.BooleanOptionalAction)
 
     arguments = argparser.parse_args()
     g = rdflib.Graph()
@@ -210,17 +211,25 @@ if __name__ == "__main__":
 
     res = []
 
-    for idx, qe in enumerate(get_question_entities(g)):
+    next_idx = 0
+    for qe in get_question_entities(g):
         qen = get_question_of_entity(g, qe, "en")
         qes = get_question_of_entity(g, qe, "es")
         query = get_query_of_entity(g, qe)
+        mentions = get_mentions(g, qe, qen["string"], lang="en") + get_mentions(g, qe, qes["string"], lang="es")
+        answers = get_results(query["sparql"], arguments.endpoint)
+        if arguments.skipempty and "results" in answers and len(answers["results"]["bindings"]) == 0:
+            print(f"Skipping {qe}")
+            continue
+
         row = {
-            "id": idx,
+            "id": next_idx,
             "question": [qen, qes],
             "query": query,
-            "mentions": get_mentions(g, qe, qen["string"], lang="en") + get_mentions(g, qe, qes["string"], lang="es"),
-            "answers": [get_results(query["sparql"], arguments.endpoint)],
+            "mentions": mentions,
+            "answers": [answers],
         }
+        next_idx += 1
         print(row)
         res.append(row)
 
