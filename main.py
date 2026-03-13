@@ -229,4 +229,4 @@ if __name__ == "__main__":
             "id": "wikikgqa2026"
         },
         "questions": res
-    }, open(arguments.outpath, "w"))
+    }, open(arguments.outpath, "w"), indent=4)
