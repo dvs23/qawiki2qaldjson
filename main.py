@@ -201,7 +201,7 @@ def get_results(query, endpoint):
 if __name__ == "__main__":
     argparser = ArgumentParser()
     argparser.add_argument("--endpoint", type=str, default="http://localhost:8890/sparql")
-    argparser.add_argument("--ttlfile", type=str, default="./dump-2026-03-12.ttl")
+    argparser.add_argument("--ttlfile", type=str, default="./dump-2026-03-13.ttl")
     argparser.add_argument("--outpath", type=str, default="./wikikgqa.json")
     argparser.add_argument('--skipempty', action=argparse.BooleanOptionalAction)
 
