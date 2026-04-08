@@ -115,7 +115,7 @@ def get_mentions(g, entity, question=None, lang="en"):
         {PREFIXES}
         SELECT DISTINCT ?mention ?entityuri ?propertyuri ?invpropertyuri ?maxpropertyuri ?minpropertyuri ?valpropertyuri ?existspropertyuri ?notexistspropertyuri ?notexistsinvpropertyuri ?existsinvpropertyuri ?subpropertyuri ?superpropertyuri ?objproppropertyuri ?objvalpropertyuri
         WHERE {{
-            <{entity}> p:P38 ?stmt .
+            <{entity}> wdt:P47*/p:P38 ?stmt .
             ?stmt ps:P38 ?mention .
             OPTIONAL {{ ?stmt pq:P17 ?entityuri }} .
             OPTIONAL {{ ?stmt pq:P18 ?propertyuri }} .
@@ -204,6 +204,7 @@ if __name__ == "__main__":
     argparser.add_argument("--ttlfile", type=str, default="./dump-2026-03-19.ttl")
     argparser.add_argument("--outpath", type=str, default="./wikikgqa.json")
     argparser.add_argument('--skipempty', action=argparse.BooleanOptionalAction)
+    argparser.add_argument('--skipmulticol', action=argparse.BooleanOptionalAction)
 
     arguments = argparser.parse_args()
     g = rdflib.Graph()
@@ -218,8 +219,11 @@ if __name__ == "__main__":
         query = get_query_of_entity(g, qe)
         mentions = get_mentions(g, qe, qen["string"], lang="en") + get_mentions(g, qe, qes["string"], lang="es")
         answers = get_results(query["sparql"], arguments.endpoint)
+        if arguments.skipmulticol and "head" in answers and "vars" in answers["head"] and len(answers["head"]["vars"]) > 1:
+            print(f"Skipping (multicol) {qe}")
+            continue
         if arguments.skipempty and "results" in answers and len(answers["results"]["bindings"]) == 0:
-            print(f"Skipping {qe}")
+            print(f"Skipping (empty) {qe}")
             continue
 
         row = {
