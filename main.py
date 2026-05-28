@@ -127,8 +127,8 @@ def get_mentions(g, entity, question=None, lang="en"):
             OPTIONAL {{ ?stmt pq:P52 ?notexistspropertyuri }} . 
             OPTIONAL {{ ?stmt pq:P56 ?notexistsinvpropertyuri }} .
             OPTIONAL {{ ?stmt pq:P55 ?existsinvpropertyuri }} .
-            OPTIONAL {{ ?stmt pq:P58 ?subpropertyuri }} .
-            OPTIONAL {{ ?stmt pq:P59 ?superpropertyuri }} .
+            OPTIONAL {{ ?stmt pq:P59 ?subpropertyuri }} .
+            OPTIONAL {{ ?stmt pq:P58 ?superpropertyuri }} .
             OPTIONAL {{ ?stmt pq:P62 ?objproppropertyuri . ?stmt pq:P63 ?objvalpropertyuri }} .
             FILTER(LANG(?mention) = "{lang}") 
         }}"""
