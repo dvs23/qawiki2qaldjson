@@ -26,28 +26,143 @@
     <link rel="stylesheet" href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css" />
     
     <script>
+        var jsondata = "";
+        function createMentionsJSON() {
+            var word1 = $(".group0 .nl").val();
+            var kg1 = $(".group0 .kg").val();
+            var word2 = $(".group1 .nl").val();
+            var kg2 = $(".group1 .kg").val();
+            if((""+word1+kg1).length == 0){
+                return "";
+            }
+
+            var lang = $("#mentionlang").val();
+
+            switch($("#g0 select").val()){
+                case "entity":
+                    return `{
+    "language": "${lang}",
+    "string": "${word1}",                            
+    "entity": "${kg1}",
+},`
+                case "property":
+                    return `{
+    "language": "${lang}",
+    "string": "${word1}",                          
+    "property": "${kg1}",
+},`
+                case "invproperty":
+                    return `{
+    "language": "${lang}",
+    "string": "${word1}",                            
+    "property": "${kg1}",
+    "inverse": true,
+},`
+                case "supmaxproperty":
+                    return `{
+    "language": "${lang}",
+    "string": "${word1}",                            
+    "property": "${kg1}",
+    "superlative": "max",
+},`
+                case "supminproperty":
+                    return `{
+    "language": "${lang}",
+    "string": "${word1}",                            
+    "property": "${kg1}",
+    "superlative": "min",
+},`
+                case "existsproperty":
+                    return `{
+    "language": "${lang}",
+    "string": "${word1}",                            
+    "property": "${kg1}",
+    "quantifier": "exists",
+},`
+                case "nonexistproperty":
+                    return `{
+    "language": "${lang}",
+    "string": "${word1}",                            
+    "property": "${kg1}",
+    "quantifier": "not exists",
+},`
+                case "superproperty":
+                    return `{
+    "language": "${lang}",
+    "string": "${word1}",                            
+    "property": "${kg1}",
+    "mention": "superproperty",
+},`
+                case "subproperty":
+                    return `{
+    "language": "${lang}",
+    "string": "${word1}",                            
+    "property": "${kg1}",
+    "mention": "subproperty",
+},`
+                case "fixedproperty":
+                    return `{
+    "language": "${lang}",
+    "string": "${word1}",                            
+    "property": "${kg1}",
+    "entity": "${kg2}",
+},`
+            }
+        }
+
         $(document).ready(function () {
-            /*$("#{{ form.sense_reference_has_value.auto_id }}").autocomplete({
-                source: function( request, response ) {
-                    $.get( 
-                        "{% url 'property_objects_completion' %}", 
-                        {"term": request.term, "property": $("#{{ form.sense_reference_on_property.auto_id }}").val(), "kg": $("#{{ form.kg.auto_id }}").val()}
-                    ).done(function( data ) {
-                        response(data);
-                    })
-                    .fail(function() {
-                        response([]);
-                    });                    
-                },
-                minLength: 2,
+            $("#query").height( $("#query")[0].scrollHeight );    
+            $("#question").autocomplete({
+                source: ["INSERT HERE"]
+                minLength: 0,
                 select: function( event, ui ) {
-                    changed = true;
+                    $("#question").val(ui.item.value);
+                    $("#query").val(ui.item.query);
+                    $("#query").height( $("#query")[0].scrollHeight );
+                    $("#hint").html(ui.item.hint);
                 }
-            });*/
-            //$('#turtle-container').html("<pre><code class='json' id='json-preview'>" + data.ttl + "</code></pre>");
-            //$("#turtle-preview").html(data);
+            });
             hljs.addPlugin(new CopyButtonPlugin());
             hljs.highlightAll();
+            $("#json-preview2").html(hljs.highlight(createMentionsJSON(), { language: 'json' } ).value);
+            if($("#mentiontype").val() == "entity"){
+                $(".kglabel").text("KG entity:");
+            }
+            else {
+                $(".kglabel").text("KG property:")
+            }
+            if($("#mentiontype").val() != "fixedproperty"){
+                $(".group1").hide();
+            }
+            else {
+                $(".group1").show();
+            }
+            $("#addbtn").click(function() {
+                jsondata += createMentionsJSON() + "\n";
+                $("#json-preview").html(hljs.highlight(jsondata, { language: 'json' } ).value);
+            } );
+            $("#mentionlang, .group0 .nl, .group0 .kg, .group1 .kg").on( "change", function() {
+                $("#json-preview2").html(hljs.highlight(createMentionsJSON(), { language: 'json' } ).value);
+            } );
+            $("#mentionlang, .group0 .nl, .group0 .kg, .group1 .kg").on( "keyup", function() {
+                $("#json-preview2").html(hljs.highlight(createMentionsJSON(), { language: 'json' } ).value);
+            } );
+            $("#mentiontype").on( "change", function() {
+                $(".kglabel").text("KG entity/property:")
+                if($("#mentiontype").val() == "entity"){
+                    $(".kglabel").text("KG entity:");
+                }
+                else {
+                    $(".kglabel").text("KG property:")
+                }
+                if($("#mentiontype").val() != "fixedproperty"){
+                    $(".group1").hide();
+                }
+                else {
+                    $(".group1").show();
+                }
+                $("#json-preview2").html(hljs.highlight(createMentionsJSON(), { language: 'json' } ).value);
+            } );
 
 
         });
@@ -56,9 +171,8 @@
         a {
             color: #000000 !important;
         }
-        .tableMaxWidth {
-            max-width: 200px;
-            overflow-wrap: break-word;
+        .input-group-text {
+            background-color:#e9ecef;
         }
     </style>
 </head>
@@ -70,9 +184,22 @@
     <div class="row flex-grow-sm-1 flex-grow-1">
         <main class="col-md-8 pb-1">
             <div class="bg-secondary p-5 rounded">
-                <div class="input-group" id="g0">
-                    <select class="form-select groupselect">
-                      <option value="entity" selected>Entity (P17) Ex: Angela Merkel</option>
+                <div class="input-group mb-3">
+                  <span class="input-group-text">Question:</span>
+                  <input id="question" type="text" class="form-control">
+                </div>
+                <div class="input-group mb-3">
+                  <span class="input-group-text">SPARQL:</span>
+                  <textarea id="query" class="form-control"></textarea>
+                </div>
+                <div id="hint">
+                    
+                </div>
+
+                <h2>Add Mentions</h2>
+                <div id="g0">
+                    <select class="form-select mb-3 w-auto" id="mentiontype">
+                      <option value="entity" selected>Entity (P17) Ex: Pluto</option>
                       <option value="property">Direct property (P18) Ex: population -> P1082 (population)</option>
                       <option value="invproperty">Inverse property (P45) Ex: discovered -> P61 (discoverer)</option>
                       <option value="supmaxproperty">Superlative property (max value at top) (P48) Ex: heaviest -> P2067 (mass)</option>
@@ -83,28 +210,38 @@
                       <option value="subproperty">Subproperty (P59)</option>
                       <option value="fixedproperty">Fixed property+value combination (P62, P63, P50) Ex: mathmatician -> P106 (occupation) Q170790 (mathmatician)</option>
                     </select>
+                    <select class="form-select mb-3 w-auto" id="mentionlang">
+                      <option value="en" selected>English</option>
+                      <option value="es">Spanish</option>
+                    </select>
                     <div class="input-group mb-3 group0">
-                        <span class="input-group-text">NL</span>
-                        <input class="form-control nl" value="test">
-                        <span class="input-group-text">KG entity/property</span>
-                        <input class="form-control kg" value="wd:42">
+                        <span class="input-group-text">Word(s):</span>
+                        <input class="form-control nl" value="">
+                        <span class="input-group-text kglabel">KG entity/property:</span>
+                        <input class="form-control kg" value="">
                     </div>
                     <div class="input-group mb-3 group1">
-                        <span class="input-group-text">NL</span>
-                        <input class="form-control nl" value="test">
-                        <span class="input-group-text">KG entity/property</span>
-                        <input class="form-control kg" value="wd:42">
+                        <span class="input-group-text">KG entity:</span>
+                        <input class="form-control kg" value="">
                     </div>
+                    <div id="json-container2">
+                        <pre><code class="json" id="json-preview2">
+{
+}
+                        </code></pre>
+                    </div>
+                    <button id="addbtn" class="btn btn-primary">Add to list</button>
                 </div>
             </div>
         </main>
         <main class="col-md-4 pb-1">
             <div class="bg-secondary p-5 rounded">
                 <h2>JSON</h2>
+                <h3>(Copy this, content not saved automatically!)</h3>
+                <a class="btn btn-primary" role="button" href="https://docs.google.com/spreadsheets/d/11UGGvhwY5ytdEHdeHxTVm0woKuUk_fei9pW_Sx11EP4/edit?usp=sharing">Google Sheet</a>
                 <div id="json-container">
                     <pre><code class="json" id="json-preview">
 {
-    "Hallo": "Welt!",
 }
                     </code></pre>
                 </div>
