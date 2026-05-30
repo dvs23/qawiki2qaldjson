@@ -113,7 +113,7 @@
         $(document).ready(function () {
             $("#query").height( $("#query")[0].scrollHeight );    
             $("#question").autocomplete({
-                source: ["INSERT HERE"]
+                source: ["INSERT HERE"],
                 minLength: 0,
                 select: function( event, ui ) {
                     $("#question").val(ui.item.value);
@@ -163,6 +163,16 @@
                 }
                 $("#json-preview2").html(hljs.highlight(createMentionsJSON(), { language: 'json' } ).value);
             } );
+            $('#clearbtn').click(function(e) {
+                e.preventDefault();
+                if (window.confirm("Are you sure?")) {
+                    jsondata = "";
+                    $("#json-preview").html(hljs.highlight(jsondata, { language: 'json' } ).value);
+                    $("#json-preview2").html("");
+                    $("#question, #query, .group0 .nl, .group0 .kg, .group1 .kg").val("");
+                    $("#hint").html("");
+                }
+            });
 
 
         });
@@ -184,6 +194,7 @@
     <div class="row flex-grow-sm-1 flex-grow-1">
         <main class="col-md-8 pb-1">
             <div class="bg-secondary p-5 rounded">
+                <button id="clearbtn" class="btn btn-danger mb-3">Clear all</button>
                 <div class="input-group mb-3">
                   <span class="input-group-text">Question:</span>
                   <input id="question" type="text" class="form-control">
