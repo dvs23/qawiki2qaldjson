@@ -113,7 +113,7 @@
         $(document).ready(function () {
             $("#query").height( $("#query")[0].scrollHeight );    
             $("#question").autocomplete({
-                source: ["INSERT HERE"],
+                source: [{"value": "INSERT QUESTION", "label": "INSERT QUESTION", "query": "INSERT SPARQL", "hint": "INSERT HINT DATA: <a href=\"https://www.wikidata.org/entity/Q123\">Q123</a>: LABEL<br><a href=\"https://www.wikidata.org/prop/P123\">P123</a>: LABEL<br>"},...],
                 minLength: 0,
                 select: function( event, ui ) {
                     $("#question").val(ui.item.value);
